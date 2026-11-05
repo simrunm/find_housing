@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reply to listing</title>
+<style>
+  :root { --bg:#fff; --fg:#1a1a1a; --muted:#666; --card:#f3f3f1; --accent:#1f6feb; --ok:#1a7f37; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#121212; --fg:#eee; --muted:#9a9a9a; --card:#1f1f1f; --accent:#4c8dff; --ok:#3fb950; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:20px; background:var(--bg); color:var(--fg);
+         font:16px/1.45 -apple-system, system-ui, "Segoe UI", sans-serif; max-width:640px; margin-inline:auto; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 16px; word-break:break-word; }
+  .open { display:block; text-align:center; background:var(--accent); color:#fff; text-decoration:none;
+          padding:14px; border-radius:10px; font-weight:600; margin-bottom:20px; }
+  .msg { width:100%; text-align:left; background:var(--card); color:var(--fg); border:2px solid transparent;
+         border-radius:10px; padding:14px; margin-bottom:10px; font:inherit; cursor:pointer; }
+  .msg b { display:block; margin-bottom:4px; }
+  .msg span { color:var(--muted); font-size:14px; white-space:pre-wrap; }
+  .msg.done { border-color:var(--ok); }
+  #status { color:var(--ok); min-height:1.5em; font-weight:600; }
+</style>
+</head>
+<body>
+  <h1>Reply to this listing</h1>
+  <p class="sub" id="title"></p>
+  <a class="open" id="open" href="#" target="_blank" rel="noopener">Open listing</a>
+  <p>Tap a message to copy it, then tap <em>Reply</em> on the listing and paste.</p>
+  <p id="status"></p>
+  <div id="list"></div>
+
+<script>
+  // ---- EDIT THESE ----
+  const MY_NAME = "Your Name";
+  const MESSAGES = [
+    { label: "Interested + viewing",
+      text: "Hi! I’m interested in “{title}”. Is it still available? I’d love to schedule a viewing this week. I’m employed with references and can move in quickly. Thanks, {name}" },
+    { label: "Quick availability check",
+      text: "Hi, is this still available? What’s the earliest time I could see it? Thanks, {name}" },
+    { label: "Ask the details",
+      text: "Hi! I’m interested in “{title}”. Could you tell me the lease length, utilities included, pet policy, and parking situation? Thanks, {name}" },
+  ];
+  // --------------------
+
+  const params = new URLSearchParams(location.search);
+  const url = params.get("u") || "";
+  const title = params.get("t") || "your listing";
+
+  document.getElementById("title").textContent = title;
+  const openLink = document.getElementById("open");
+  if (/^https:\/\/[a-z0-9.-]*craigslist\.org\//i.test(url)) openLink.href = url;
+  else openLink.style.display = "none";
+
+  const status = document.getElementById("status");
+  const list = document.getElementById("list");
+
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand("copy"); ta.remove(); return ok;
+    }
+  }
+
+  MESSAGES.forEach(m => {
+    const filled = m.text.replaceAll("{title}", title).replaceAll("{name}", MY_NAME);
+    const btn = document.createElement("button");
+    btn.className = "msg";
+    const b = document.createElement("b"); b.textContent = m.label;
+    const s = document.createElement("span"); s.textContent = filled;
+    btn.append(b, s);
+    btn.onclick = async () => {
+      document.querySelectorAll(".msg").forEach(x => x.classList.remove("done"));
+      const ok = await copy(filled);
+      if (ok) btn.classList.add("done");
+      status.textContent = ok ? "Copied. Now open the listing and paste." : "Couldn’t copy. Long-press the text instead.";
+    };
+    list.appendChild(btn);
+  });
+</script>
+</body>
+</html>
